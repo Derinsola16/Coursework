@@ -29,7 +29,7 @@
           class="btn btn-outline-success my-2 my-sm-0"
           v-if="!showProduct"
         >
-          <i class="fa fa-cart-plus"></i> {{cart.length}}
+          <i class="fa fa-cart-plus"></i> {{cartItem}}
         </button>
         <button
           class="btn btn-outline-danger my-2 my-sm-0"
@@ -38,12 +38,13 @@
         >
           <i class="fa fa-arrow-left"></i> Go back
         </button>
+        
         <button
           class="btn btn-outline-warning my-2 my-sm-0"
           @click="checkout"
-          v-else-if="Object.keys(cart).length && cart.constructor === Object"
+          v-else
         >
-          <i class="fa fa-cart-plus"></i> <span>{{newCart}}</span> Cart
+          <i class="fa fa-cart-plus"></i> <span>{{cartItem}}</span> Cart
         </button>
       </nav>
       <div class="d-flex" v-if="showProduct">
@@ -51,35 +52,83 @@
         <div class="mr-5 mt-5">
           <h5>Sort Items</h5>
           <div class="custom-control custom-radio">
-            <input type="radio" id="price" name="customRadio" class="custom-control-input" @click="sortPrice">
-            <label class="custom-control-label font-weight-bold" for="price">Price</label>
+            <input
+              type="radio"
+              id="price"
+              value="price"
+              class="custom-control-input"
+              v-model="sortBy"
+            />
+            <label class="custom-control-label font-weight-bold" for="price"
+              >Price</label
+            >
           </div>
           <div class="custom-control custom-radio">
-            <input type="radio" id="subject" name="customRadio" class="custom-control-input">
-            <label class="custom-control-label font-weight-bold" for="subject">Subject</label>
+            <input
+              type="radio"
+              id="subject"
+              value="subject"
+              class="custom-control-input"
+              v-model="sortBy"
+            />
+            <label class="custom-control-label font-weight-bold" for="subject"
+              >Subject</label
+            >
           </div>
           <div class="custom-control custom-radio">
-            <input type="radio" id="location" name="customRadio" class="custom-control-input">
-            <label class="custom-control-label font-weight-bold" for="location">Location</label>
+            <input
+              type="radio"
+              id="location"
+              value="location"
+              class="custom-control-input"
+              v-model="sortBy"
+            />
+            <label class="custom-control-label font-weight-bold" for="location"
+              >Location</label
+            >
           </div>
           <div class="custom-control custom-radio">
-            <input type="radio" id="item" name="customRadio" class="custom-control-input">
-            <label class="custom-control-label font-weight-bold" for="item">Availability</label>
+            <input
+              type="radio"
+              id="item"
+              value="item"
+              class="custom-control-input"
+              v-model="sortBy"
+            />
+            <label class="custom-control-label font-weight-bold" for="item"
+              >Availability</label
+            >
           </div>
           <div class="mt-5">
-            <div class="custom-control custom-checkbox">
-              <input type="checkbox" id="ascending" class="custom-control-input">
-              <label class="custom-control-label font-weight-bolder" for="ascending">Ascending</label>
+            <div class="custom-control custom-radio">
+              <input
+                type="radio"
+                id="ascending"
+                value="1"
+                class="custom-control-input"
+                v-model="orderBy"
+              />
+              <label class="custom-control-label font-weight-bold" for="ascending"
+                >Ascending</label
+              >
             </div>
-            <div class="custom-control custom-checkbox">
-              <input type="checkbox" id="decending" class="custom-control-input">
-              <label class="custom-control-label font-weight-bolder" for="decending">Decending</label>
+            <div class="custom-control custom-radio">
+              <input
+                type="radio"
+                id="descending"
+                value="-1"
+                class="custom-control-input"
+                v-model="orderBy"
+              />
+              <label class="custom-control-label font-weight-bold" for="descending"
+                >Descending</label
+              >
             </div>
           </div>
         </div>
-
+          <!-- Displaying all products -->
         <div class="container-fluid row">
-          <div v-for="lesson in lessons" class="mr-4 mb-5" >
+          <div v-for="lesson in sort" class="mr-4 mb-5" id="content">
             <img v-bind:src="lesson.image" class="" />
             <div>
               <h3>Subject: {{lesson.subject}}</h3>
@@ -166,68 +215,118 @@
           name: "",
           number: "",
         },
+        sortBy: "price",
+        orderBy: "-1"
       },
       methods: {
         addToCart: function(product) {
-          // this.cart.push(product.id)
           if (this.cart.hasOwnProperty(product.id)) {
             this.cart[product.id].qty++;
             return;
           }
           product.qty = 1;
-          this.cart[product.id] = product;
+          this.$set(this.cart, product.id, product)
         },
+
         addToCheckOutCart(product) {
           this.addToCheckOutCart.push(product);
         },
+
         checkout: function() {
           this.showProduct = this.showProduct ? false : true;
         },
+
         cartCount(id) {
           let count = 0;
-          for (let i = 0; i < Object.entries(this.cart).length; i++) {
+
+          for (let i = 0; i < Object.keys(this.cart).length; i++) {
             if (this.cart[i] === id) {
               count++;
             }
           }
           return count;
-
-          // var key, count = 0;
-
-          // // Check if every key has its own property
-          // for (key in this.cart) {
-          //   if (this.cart.hasOwnProperty(key))
-
-          //     // If key is found, add it
-          //     // to total length
-          //     count++;
-          // }
-          // return count;
         },
+
         addLesson: function(lesson) {
           return lesson.numberOfSpace > this.cartCount(lesson.id);
         },
-        sortPrice: function() {
-          let productsArray = this.lessons.slice(0);
-          function compare(a, b) {
-            if (a.price > b.price) return -1;
-            if (a.price < b.price) return 1;
-            return 0;
-          }
-          return productsArray.sort(compare);
-        },
+
         order() {
           alert("Dear " + this.user.name + " your order has been placed!!!!");
         },
       },
-      mounted() {
-        newCart = Object.keys(this.cart).length;
-        console.log(newCart);
-      },
+      mounted() {},
       computed: {
         cartItem: function() {
-          // return Object.keys(this.cart).length;
+          if(Object.keys(this.cart).length > 0){
+            return Object.keys(this.cart).length
+          } else {
+            return 0
+          }
         },
+
+        sort: function() {
+          let desc = -1
+          let asc = 1
+          if(this.orderBy === "-1") {
+            desc = 1
+            asc = -1
+          }
+          if(this.sortBy === 'price') {
+             // Sort by price
+            let productsArray = this.lessons.slice(0);
+            function compare(a, b) {
+              if (a.price > b.price) return desc;
+              if (a.price < b.price) return asc;
+              return 0;
+            }
+            return productsArray.sort(compare);
+          } else if(this.sortBy === 'subject') {
+            // sort by subject
+            let productsArray = this.lessons.slice(0);
+            function compare(a, b) {
+              let nameA = a.subject.toUpperCase(); // ignore upper and lowercase
+              let nameB = b.subject.toUpperCase(); // ignore upper and lowercase
+              if (nameA < nameB) {
+                return -1;
+              }
+              if (nameA > nameB) {
+                return 1;
+              }
+              // names must be equal
+              return 0;
+            };
+            return productsArray.sort(compare)
+          } else if(this.sortBy === 'location') {
+            // sort by location
+            let productsArray = this.lessons.slice(0);
+            function compare(a, b) {
+              let nameA = a.location.toUpperCase(); // ignore upper and lowercase
+              let nameB = b.location.toUpperCase(); // ignore upper and lowercase
+              if (nameA < nameB) {
+                return -1;
+              }
+              if (nameA > nameB) {
+                return 1;
+              }
+              // names must be equal
+              return 0;
+            };
+            return productsArray.sort(compare)
+          } else if(this.sortBy === 'item') {
+              // sort by item remaining
+              let productsArray = this.lessons.slice(0);
+            function compare(a, b) {
+              if (a.numberOfSpace > b.numberOfSpace) return 1;
+              if (a.numberOfSpace < b.numberOfSpace) return -1;
+              return 0;
+            }
+            return productsArray.sort(compare);
+          }
+        },
+
+
+
       },
     });
   </script>
