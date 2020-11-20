@@ -41,47 +41,79 @@
         <button
           class="btn btn-outline-warning my-2 my-sm-0"
           @click="checkout"
-          v-else-if="this.cart.length > 0"
+          v-else-if="Object.keys(cart).length && cart.constructor === Object"
         >
-          <i class="fa fa-cart-plus"></i> <span>{{cart.length}}</span> Cart
+          <i class="fa fa-cart-plus"></i> <span>{{newCart}}</span> Cart
         </button>
       </nav>
-
-      <div class="container-fluid row" v-if="showProduct">
-        <div v-for="lesson in sortLesson" class="mr-4 mb-5">
-          <img v-bind:src="lesson.image" class="" />
-          <div>
-            <h3>Subject: {{lesson.subject}}</h3>
-            <h3>Location: {{lesson.location}}</h3>
-            <h3>Price: {{lesson.price}}</h3>
-            <h3 v-on="lesson.numberOfSpace - cartCount(lesson.id) < 5">
-              Items Remaining: {{lesson.numberOfSpace - cartCount(lesson.id)}}
-            </h3>
+      <div class="d-flex" v-if="showProduct">
+        <!-- Sorting -->
+        <div class="mr-5 mt-5">
+          <h5>Sort Items</h5>
+          <div class="custom-control custom-radio">
+            <input type="radio" id="price" name="customRadio" class="custom-control-input" @click="sortPrice">
+            <label class="custom-control-label font-weight-bold" for="price">Price</label>
           </div>
-          <div>
-            <button
-              v-on:click="addToCart(lesson)"
-              class="btn btn-success"
-              v-if="addLesson(lesson)"
-            >
-              Add to Cart
-            </button>
-            <h5
-              class="text-danger"
-              v-if="lesson.numberOfSpace === cartCount(lesson.id)"
-            >
-              Sold out
-            </h5>
+          <div class="custom-control custom-radio">
+            <input type="radio" id="subject" name="customRadio" class="custom-control-input">
+            <label class="custom-control-label font-weight-bold" for="subject">Subject</label>
+          </div>
+          <div class="custom-control custom-radio">
+            <input type="radio" id="location" name="customRadio" class="custom-control-input">
+            <label class="custom-control-label font-weight-bold" for="location">Location</label>
+          </div>
+          <div class="custom-control custom-radio">
+            <input type="radio" id="item" name="customRadio" class="custom-control-input">
+            <label class="custom-control-label font-weight-bold" for="item">Availability</label>
+          </div>
+          <div class="mt-5">
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" id="ascending" class="custom-control-input">
+              <label class="custom-control-label font-weight-bolder" for="ascending">Ascending</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" id="decending" class="custom-control-input">
+              <label class="custom-control-label font-weight-bolder" for="decending">Decending</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="container-fluid row">
+          <div v-for="lesson in lessons" class="mr-4 mb-5" >
+            <img v-bind:src="lesson.image" class="" />
+            <div>
+              <h3>Subject: {{lesson.subject}}</h3>
+              <h3>Location: {{lesson.location}}</h3>
+              <h3>Price: {{lesson.price}}</h3>
+              <h3 v-on="lesson.numberOfSpace - cartCount(lesson.id) < 5">
+                Items Remaining: {{lesson.numberOfSpace - cartCount(lesson.id)}}
+              </h3>
+            </div>
+            <div>
+              <button
+                v-on:click="addToCart(lesson)"
+                class="btn btn-success"
+                v-if="addLesson(lesson)"
+              >
+                Add to Cart
+              </button>
+              <h5
+                class="text-danger"
+                v-if="lesson.numberOfSpace === cartCount(lesson.id)"
+              >
+                Sold out
+              </h5>
+            </div>
           </div>
         </div>
       </div>
 
       <div v-else>
         <h5>Cart</h5>
-        <div class="form-inline" v-for="item in cart">
+        <div class="form-inline" v-for="(item, index) in cart">
           <div class="form-group mx-sm-3 mb-2">
-            <span class="mr-2">{{cartItem}}</span>
-            <input class="form-control mr-2" />
+            <span class="mr-2">{{item.subject}}</span>
+            <input v-model="item.qty" class="form-control mr-2" />
             <button class="btn btn-danger">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -92,13 +124,30 @@
         <div>
           <form>
             <div class="form-group mx-sm-3">
-              <label for="exampleInputEmail1"></label>Name</label>
-              <input v-model.trim="user.name" type="text" class="form-control col-md-6" aria-describedby="emailHelp" required>
+              <label for="exampleInputEmail1">Name</label>
+              <input
+                v-model.trim="user.name"
+                type="text"
+                class="form-control col-md-6"
+                aria-describedby="emailHelp"
+                required
+              />
 
               <label for="exampleInputPassword1">Phone Number</label>
-              <input v-model.trim="user.number" type="number" class="form-control col-sm-6" required>
+              <input
+                v-model.trim="user.number"
+                type="number"
+                class="form-control col-sm-6"
+                required
+              />
             </div>
-            <button class="btn btn-primary" v-if="user.name && user.number" @click="order">Checkout</button>
+            <button
+              class="btn btn-primary"
+              v-if="user.name && user.number"
+              @click="order"
+            >
+              Checkout
+            </button>
           </form>
         </div>
       </div>
@@ -111,23 +160,22 @@
       data: {
         appName: "School Books",
         showProduct: true,
-        cart: [],
+        cart: {},
         lessons: lessons,
         user: {
           name: "",
-          number: ""
+          number: "",
         },
       },
       methods: {
         addToCart: function(product) {
-          this.cart.push(product.id)
-          // if(this.cart.hasOwnProperty(product.id)) {
-          //   this.cart[product.id].qty++
-          //   return
-          // }
-          // product.qty = 1
-          // this.cart[product.id] = product
-          
+          // this.cart.push(product.id)
+          if (this.cart.hasOwnProperty(product.id)) {
+            this.cart[product.id].qty++;
+            return;
+          }
+          product.qty = 1;
+          this.cart[product.id] = product;
         },
         addToCheckOutCart(product) {
           this.addToCheckOutCart.push(product);
@@ -137,26 +185,29 @@
         },
         cartCount(id) {
           let count = 0;
-          for (let i = 0; i < this.cart.length; i++) {
+          for (let i = 0; i < Object.entries(this.cart).length; i++) {
             if (this.cart[i] === id) {
               count++;
             }
           }
           return count;
+
+          // var key, count = 0;
+
+          // // Check if every key has its own property
+          // for (key in this.cart) {
+          //   if (this.cart.hasOwnProperty(key))
+
+          //     // If key is found, add it
+          //     // to total length
+          //     count++;
+          // }
+          // return count;
         },
         addLesson: function(lesson) {
           return lesson.numberOfSpace > this.cartCount(lesson.id);
         },
-        order(){
-          alert("Dear " + this.user.name + " your order has been placed!!!!")
-        }
-      },
-      computed: {
-        cartItem: function() {
-          return this.cart.length;
-        },
-
-        sortLesson() {
+        sortPrice: function() {
           let productsArray = this.lessons.slice(0);
           function compare(a, b) {
             if (a.price > b.price) return -1;
@@ -164,6 +215,18 @@
             return 0;
           }
           return productsArray.sort(compare);
+        },
+        order() {
+          alert("Dear " + this.user.name + " your order has been placed!!!!");
+        },
+      },
+      mounted() {
+        newCart = Object.keys(this.cart).length;
+        console.log(newCart);
+      },
+      computed: {
+        cartItem: function() {
+          // return Object.keys(this.cart).length;
         },
       },
     });
